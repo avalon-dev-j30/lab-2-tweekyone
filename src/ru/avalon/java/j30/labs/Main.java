@@ -1,4 +1,4 @@
-package ru.avalon.java.ocpjp.labs;
+package ru.avalon.java.j30.labs;
 
 import java.sql.Connection;
 import java.sql.SQLException;
