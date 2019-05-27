@@ -1,10 +1,9 @@
 package ru.avalon.java.j30.labs;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * Класс описывает представление о коде товара и отражает соответствующую 
@@ -43,11 +42,11 @@ public class ProductCode {
      * @param set {@link ResultSet}, полученный в результате запроса, 
      * содержащего все поля таблицы PRODUCT_CODE базы данных Sample.
      */
-    private ProductCode(ResultSet set) {
-        /*
-         * TODO #05 реализуйте конструктор класса ProductCode
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");        
+    private ProductCode(ResultSet set) throws SQLException{
+        code = set.getString("prod_code");
+        String stringDiscountCode = set.getString("discount_code");
+        discountCode = stringDiscountCode.charAt(0);
+        description = set.getString("description");
     }
     /**
      * Возвращает код товара
@@ -105,10 +104,8 @@ public class ProductCode {
      */
     @Override
     public int hashCode() {
-        /*
-         * TODO #06 Реализуйте метод hashCode
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        Character dc = new Character(discountCode); //нужно ли?
+        return Objects.hash(code, dc, description);
     }
     /**
      * Сравнивает некоторый произвольный объект с текущим объектом типа 
@@ -120,10 +117,8 @@ public class ProductCode {
      */
     @Override
     public boolean equals(Object obj) {
-        /*
-         * TODO #07 Реализуйте метод equals
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return obj instanceof ProductCode &&
+                obj.hashCode() == hashCode();
     }
     /**
      * Возвращает строковое представление кода товара.
@@ -132,10 +127,9 @@ public class ProductCode {
      */
     @Override
     public String toString() {
-        /*
-         * TODO #08 Реализуйте метод toString
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        return "Код товара: " + code + 
+                        "\nКод скидки: " + discountCode +
+                        "\nОписание: " + description;
     }
     /**
      * Возвращает запрос на выбор всех записей из таблицы PRODUCT_CODE 
@@ -144,11 +138,12 @@ public class ProductCode {
      * @param connection действительное соединение с базой данных
      * @return Запрос в виде объекта класса {@link PreparedStatement}
      */
-    public static PreparedStatement getSelectQuery(Connection connection) throws SQLException {
-        /*
-         * TODO #09 Реализуйте метод getSelectQuery
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+    public static PreparedStatement getSelectQuery(Connection connection) 
+                                                    throws SQLException {
+        Connection con = connection;
+        PreparedStatement statement = con.prepareStatement("SELECT * FROM "
+                                                           + "Product_code");
+        return statement;
     }
     /**
      * Возвращает запрос на добавление записи в таблицу PRODUCT_CODE 
@@ -157,11 +152,13 @@ public class ProductCode {
      * @param connection действительное соединение с базой данных
      * @return Запрос в виде объекта класса {@link PreparedStatement}
      */
-    public static PreparedStatement getInsertQuery(Connection connection) throws SQLException {
-        /*
-         * TODO #10 Реализуйте метод getInsertQuery
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+    public static PreparedStatement getInsertQuery(Connection connection) 
+                                                    throws SQLException {
+        Connection con = connection;
+        PreparedStatement statement = con.prepareStatement("INSERT INTO "
+                    + "Product_code (Prod_code, Discount_code, Description)"
+                    + " values (?, ?, ?)");
+        return statement;
     }
     /**
      * Возвращает запрос на обновление значений записи в таблице PRODUCT_CODE 
@@ -170,11 +167,13 @@ public class ProductCode {
      * @param connection действительное соединение с базой данных
      * @return Запрос в виде объекта класса {@link PreparedStatement}
      */
-    public static PreparedStatement getUpdateQuery(Connection connection) throws SQLException {
-        /*
-         * TODO #11 Реализуйте метод getUpdateQuery
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+    public static PreparedStatement getUpdateQuery(Connection connection) 
+                                                    throws SQLException {
+        Connection con = connection;
+        PreparedStatement statement = con.prepareStatement("UPDATE Product_code"
+                              + " SET Prod_code = ?, Discount_code = ?, "
+                                + "Description = ? WHERE Prod_code = ?");
+        return statement;
     }
     /**
      * Преобразует {@link ResultSet} в коллекцию объектов типа {@link ProductCode}
@@ -185,10 +184,11 @@ public class ProductCode {
      * @throws SQLException 
      */
     public static Collection<ProductCode> convert(ResultSet set) throws SQLException {
-        /*
-         * TODO #12 Реализуйте метод convert
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        Collection<ProductCode> list = new ArrayList<>();
+        while(set.next()){
+            list.add(new ProductCode(set));
+        }
+        return list;
     }
     /**
      * Сохраняет текущий объект в базе данных. 
@@ -199,11 +199,31 @@ public class ProductCode {
      * 
      * @param connection действительное соединение с базой данных
      */
-    public void save(Connection connection) throws SQLException {
-        /*
-         * TODO #13 Реализуйте метод convert
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+    public void save(Connection connection) throws SQLException {        
+        Collection<ProductCode> checkList = all(connection);
+        int indicator = 0;
+        PreparedStatement action;
+        
+        for (ProductCode pc : checkList){
+            if (pc.getCode().equals(this.code) || 
+                    pc.getDescription().equals(this.description)){
+                indicator++;
+                action = getUpdateQuery(connection);
+                action.setString(1, code);
+                action.setString(2, Character.toString(discountCode));
+                action.setString(3, description);
+                action.setString(4, pc.getCode());
+                action.execute();
+            }
+        } 
+        
+        if (indicator == 0){
+            action = getInsertQuery(connection);
+            action.setString(1, code);
+            action.setString(2, Character.toString(discountCode));
+            action.setString(3, description);
+            action.execute();
+        }    
     }
     /**
      * Возвращает все записи таблицы PRODUCT_CODE в виде коллекции объектов

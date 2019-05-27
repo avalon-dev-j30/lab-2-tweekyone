@@ -1,6 +1,9 @@
 package ru.avalon.java.j30.labs;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Properties;
@@ -15,7 +18,7 @@ import java.util.Properties;
  * @author Daniel Alpatov <danial.alpatov@gmail.com>
  */
 public class Main {
-
+    public static final String CONFIG = "resources/configs/database.properties";
     /**
      * Точка входа в приложение
      * 
@@ -56,10 +59,16 @@ public class Main {
      * @return URL в виде объекта класса {@link String}
      */
     private static String getUrl() {
-        /*
-         * TODO #02 Реализуйте метод getUrl
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        Properties prop = getProperties();
+        return new StringBuilder().append("jdbc:")
+                                .append(prop.get("database.driver"))
+                                .append("://")
+                                .append(prop.get("database.host"))
+                                .append(":")
+                                .append(prop.get("database.port"))
+                                .append("/")
+                                .append(prop.get("database.name"))
+                                .toString();
     }
     /**
      * Возвращает параметры соединения
@@ -68,10 +77,14 @@ public class Main {
      * password
      */
     private static Properties getProperties() {
-        /*
-         * TODO #03 Реализуйте метод getProperties
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        Properties properties = new Properties();
+        
+        try(InputStream stream = ClassLoader.getSystemResourceAsStream(CONFIG)){
+            properties.load(stream);
+            return properties;
+        } catch(IOException e){
+            throw new IllegalStateException("Config not found!", e);
+        }
     }
     /**
      * Возвращает соединение с базой данных Sample
@@ -80,10 +93,8 @@ public class Main {
      * @throws SQLException 
      */
     private static Connection getConnection() throws SQLException {
-        /*
-         * TODO #04 Реализуйте метод getConnection
-         */
-        throw new UnsupportedOperationException("Not implemented yet!");
+        Connection con = DriverManager.getConnection(getUrl(), "app", "app");
+        return con;
     }
     
 }
