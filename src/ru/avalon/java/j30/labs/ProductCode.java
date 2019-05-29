@@ -201,13 +201,13 @@ public class ProductCode {
      */
     public void save(Connection connection) throws SQLException {        
         Collection<ProductCode> checkList = all(connection);
-        int indicator = 0;
+        boolean indicator = false;
         PreparedStatement action;
         
         for (ProductCode pc : checkList){
             if (pc.getCode().equals(this.code) || 
                     pc.getDescription().equals(this.description)){
-                indicator++;
+                indicator = true;
                 action = getUpdateQuery(connection);
                 action.setString(1, code);
                 action.setString(2, Character.toString(discountCode));
@@ -217,7 +217,7 @@ public class ProductCode {
             }
         } 
         
-        if (indicator == 0){
+        if (!indicator){
             action = getInsertQuery(connection);
             action.setString(1, code);
             action.setString(2, Character.toString(discountCode));
